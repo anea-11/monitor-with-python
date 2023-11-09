@@ -3,6 +3,7 @@ import smtplib
 import os
 import paramiko
 import time
+import schedule
 
 JENKINS_URL = 'http://18.197.142.203:8080'
 
@@ -30,25 +31,31 @@ def restart_server():
     print('Restarting server...')
     # TODO
 
-try:
-    response = requests.get(JENKINS_URL)
-    if response.status_code == 200:
-        print("App is healthy")
-    else:
-        print(f'App is not healthy! Status code: {response.status_code}')
-        msg = f"Subject: SITE DOWN!\n App returned status code {response.status_code}"
+def monitor_application():
+    try:
+        response = requests.get(JENKINS_URL)
+        if response.status_code == 200:
+            print("App is healthy")
+        else:
+            print(f'App is not healthy! Status code: {response.status_code}')
+            msg = f"Subject: SITE DOWN!\n App returned status code {response.status_code}"
+            send_email_notification(msg)
+            restart_container()
+
+    except Exception as ex:
+        print(f'Connection error happened')
+        msg = "Subject: SITE DOWN!\n App not accessible"
         send_email_notification(msg)
+
+        print('Rebooting the server')
+
+        restart_server()
+
+        # TODO - wait until server is up again
+        time.sleep(5)
         restart_container()
 
-except Exception as ex:
-    print(f'Connection error happened')
-    msg = "Subject: SITE DOWN!\n App not accessible"
-    send_email_notification(msg)
+schedule.every(5).minutes.do(monitor_application)
 
-    print('Rebooting the server')
-
-    restart_server()
-
-    # TODO - wait until server is up again
-    time.sleep(5)
-    restart_container()
+while True:
+    schedule.run_pending()
