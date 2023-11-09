@@ -5,8 +5,7 @@ import paramiko
 import time
 import schedule
 
-JENKINS_URL = 'http://18.197.142.203:8080'
-
+WEBSITE_URL = os.environ.get('WEBSITE_URL')
 EMAIL_ADDRESS = os.environ.get('EMAIL_ADDRESS')
 EMAIL_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 
@@ -33,7 +32,7 @@ def restart_server():
 
 def monitor_application():
     try:
-        response = requests.get(JENKINS_URL)
+        response = requests.get(WEBSITE_URL)
         if response.status_code == 200:
             print("App is healthy")
         else:
